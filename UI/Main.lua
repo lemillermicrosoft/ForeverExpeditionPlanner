@@ -71,15 +71,16 @@ local function createPlannerPage(frame)
     local slotsTitle = FEP:CreateLabel(page, "CAMP LOADOUT", "GameFontNormalLarge")
     slotsTitle:SetPoint("TOPLEFT", 310, -20)
     for i = 1, 10 do
+        local slotIndex = i
         local row = FEP:CreateButton(page, "", 310, 27)
-        row:SetPoint("TOPLEFT", slotsTitle, "BOTTOMLEFT", 0, -8 - ((i - 1) * 29))
+        row:SetPoint("TOPLEFT", slotsTitle, "BOTTOMLEFT", 0, -8 - ((slotIndex - 1) * 29))
         row:GetFontString():SetJustifyH("LEFT")
-        row:SetScript("OnClick", function() selectedSlot = i refresh() end)
+        row:SetScript("OnClick", function() selectedSlot = slotIndex refresh() end)
         row:SetScript("OnMouseUp", function(self, button)
-            if button == "RightButton" then FEP.modules.Planner:SetSlot(i, nil) end
+            if button == "RightButton" then FEP.modules.Planner:SetSlot(slotIndex, nil) end
         end)
         row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        slotRows[i] = row
+        slotRows[slotIndex] = row
     end
     page.warning = FEP:CreateLabel(page, "", "GameFontHighlight")
     page.warning:SetPoint("BOTTOMLEFT", 310, 18)
@@ -118,14 +119,18 @@ local function createPresetsPage(frame)
         if FEP.modules.Planner:SavePreset(name:GetText()) then name:SetText("") refresh() end
     end)
     for i = 1, 12 do
+        local rowIndex = i
         local row = FEP:CreateButton(page, "", 360, 28)
-        row:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -12 - ((i - 1) * 30))
-        row:SetScript("OnClick", function(self) FEP.modules.Planner:LoadPreset(self.presetName) end)
+        row:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -12 - ((rowIndex - 1) * 30))
+        row:SetScript("OnClick", function() FEP.modules.Planner:LoadPreset(rows[rowIndex].presetName) end)
         local remove = FEP:CreateButton(page, "Delete", 80, 25)
         remove:SetPoint("LEFT", row, "RIGHT", 10, 0)
-        remove:SetScript("OnClick", function() if row.presetName then FEP.modules.Planner:DeletePreset(row.presetName) end end)
+        remove:SetScript("OnClick", function()
+            local presetName = rows[rowIndex].presetName
+            if presetName then FEP.modules.Planner:DeletePreset(presetName) end
+        end)
         row.remove = remove
-        rows[i] = row
+        rows[rowIndex] = row
     end
     FEP:On("PRESETS_CHANGED", refresh)
     page.refresh = refresh
@@ -141,15 +146,16 @@ local function createPartyPage(frame)
     note:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
     local rows = {}
     for i = 1, 10 do
+        local rowIndex = i
         local label = FEP:CreateLabel(page, "")
-        label:SetPoint("TOPLEFT", note, "BOTTOMLEFT", 0, -16 - ((i - 1) * 30))
+        label:SetPoint("TOPLEFT", note, "BOTTOMLEFT", 0, -16 - ((rowIndex - 1) * 30))
         label:SetWidth(270)
         label:SetJustifyH("LEFT")
         local box = FEP:CreateEditBox(page, 180, 26)
         box:SetPoint("LEFT", label, "RIGHT", 10, 0)
-        box:SetScript("OnEnterPressed", function(self) FEP.modules.Party:SetAssignment(i, self:GetText()) self:ClearFocus() end)
-        box:SetScript("OnEditFocusLost", function(self) FEP.modules.Party:SetAssignment(i, self:GetText()) end)
-        rows[i] = { label = label, box = box }
+        box:SetScript("OnEnterPressed", function(self) FEP.modules.Party:SetAssignment(rowIndex, self:GetText()) self:ClearFocus() end)
+        box:SetScript("OnEditFocusLost", function(self) FEP.modules.Party:SetAssignment(rowIndex, self:GetText()) end)
+        rows[rowIndex] = { label = label, box = box }
     end
     local share = FEP:CreateButton(page, "Share with party", 150, 28)
     share:SetPoint("BOTTOMLEFT", 20, 20)
@@ -188,14 +194,15 @@ local function createChecklistPage(frame)
     readiness:SetPoint("TOPLEFT", 340, -20)
     local materialRows, readyRows = {}, {}
     for i = 1, 12 do
+        local rowIndex = i
         local left = FEP:CreateCheckRow(page, 280)
-        left:SetPoint("TOPLEFT", materials, "BOTTOMLEFT", 0, -10 - ((i - 1) * 26))
-        left:SetScript("OnClick", function() FEP.modules.Checklists:Toggle("materials", i) end)
-        materialRows[i] = left
+        left:SetPoint("TOPLEFT", materials, "BOTTOMLEFT", 0, -10 - ((rowIndex - 1) * 26))
+        left:SetScript("OnClick", function() FEP.modules.Checklists:Toggle("materials", rowIndex) end)
+        materialRows[rowIndex] = left
         local right = FEP:CreateCheckRow(page, 280)
-        right:SetPoint("TOPLEFT", readiness, "BOTTOMLEFT", 0, -10 - ((i - 1) * 26))
-        right:SetScript("OnClick", function() FEP.modules.Checklists:Toggle("readiness", i) end)
-        readyRows[i] = right
+        right:SetPoint("TOPLEFT", readiness, "BOTTOMLEFT", 0, -10 - ((rowIndex - 1) * 26))
+        right:SetScript("OnClick", function() FEP.modules.Checklists:Toggle("readiness", rowIndex) end)
+        readyRows[rowIndex] = right
     end
     local function fill(rows, data)
         for i, row in ipairs(rows) do
@@ -217,14 +224,25 @@ function FEP:CreateMainWindow()
     if self.MainFrame then return end
     local frame = CreateFrame("Frame", "ForeverExpeditionPlannerFrame", UIParent, "BackdropTemplate")
     frame:SetSize(700, 520)
-    frame:SetPoint("CENTER")
+    local position = self.db.windowPosition
+    frame:SetPoint("CENTER", UIParent, "CENTER", position.x, position.y)
     frame:SetFrameStrata("DIALOG")
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local frameX, frameY = self:GetCenter()
+        local parentX, parentY = UIParent:GetCenter()
+        if type(frameX) == "number" and type(frameY) == "number" and type(parentX) == "number" and type(parentY) == "number" then
+            FEP.db.windowPosition.x = math.max(-2000, math.min(2000, frameX - parentX))
+            FEP.db.windowPosition.y = math.max(-2000, math.min(2000, frameY - parentY))
+            self:ClearAllPoints()
+            self:SetPoint("CENTER", UIParent, "CENTER", FEP.db.windowPosition.x, FEP.db.windowPosition.y)
+        end
+    end)
     self.Theme:Panel(frame)
     table.insert(UISpecialFrames, frame:GetName())
     self.MainFrame = frame
@@ -240,10 +258,11 @@ function FEP:CreateMainWindow()
 
     local tabNames = { "Planner", "Presets", "Party", "Checklists" }
     for index, name in ipairs(tabNames) do
-        local tab = self:CreateButton(frame, name, 120, 25)
-        tab:SetPoint("TOPLEFT", 16 + ((index - 1) * 124), -43)
-        tab:SetScript("OnClick", function() showPage(name) if pages[name].refresh then pages[name].refresh() end end)
-        tabs[name] = tab
+        local tabIndex, pageName = index, name
+        local tab = self:CreateButton(frame, pageName, 120, 25)
+        tab:SetPoint("TOPLEFT", 16 + ((tabIndex - 1) * 124), -43)
+        tab:SetScript("OnClick", function() showPage(pageName) if pages[pageName].refresh then pages[pageName].refresh() end end)
+        tabs[pageName] = tab
     end
     createPlannerPage(frame)
     createPresetsPage(frame)

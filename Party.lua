@@ -2,8 +2,27 @@ local _, FEP = ...
 local Party = { prefix = "FEP1", roster = {} }
 FEP:RegisterModule("Party", Party)
 
+local function isSecret(value)
+    if type(issecretvalue) ~= "function" then return false end
+    local ok, result = pcall(issecretvalue, value)
+    return not ok or result == true
+end
+
+local function safeString(value, fallback)
+    if isSecret(value) then return fallback end
+    if type(value) ~= "string" then return fallback end
+    return value
+end
+
 local function sanitize(value)
-    return tostring(value or ""):gsub("[|;\n\r]", " "):sub(1, 80)
+    local text = safeString(value, "")
+    return text:gsub("[|;\n\r]", " "):sub(1, 80)
+end
+
+local function safeUnitName(unit, fallback)
+    local ok, name = pcall(UnitName, unit)
+    if not ok then return fallback end
+    return safeString(name, fallback)
 end
 
 function Party:Initialize()
@@ -16,11 +35,11 @@ function Party:Initialize()
 end
 
 function Party:RefreshRoster()
-    self.roster = { UnitName("player") or "Player" }
+    self.roster = { safeUnitName("player", "Player") }
     local units = IsInRaid() and "raid" or "party"
     local count = IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()
     for i = 1, count do
-        local name = UnitName(units .. i)
+        local name = safeUnitName(units .. i, nil)
         if name then table.insert(self.roster, name) end
     end
     FEP:Emit("ROSTER_CHANGED")
@@ -54,12 +73,17 @@ function Party:Broadcast()
 end
 
 function Party:OnMessage(prefix, message, _, sender)
-    if prefix ~= self.prefix or type(message) ~= "string" then return end
+    prefix = safeString(prefix, nil)
+    message = safeString(message, nil)
+    if prefix == nil or message == nil or prefix ~= self.prefix then return end
     local count = tonumber(message:match("^B|(%d+)$"))
     if count == 3 or count == 5 or count == 10 then
         FEP.modules.Planner:SetSlotCount(count)
-        local displaySender = sender or "group member"
-        if Ambiguate then displaySender = Ambiguate(displaySender, "short") end
+        local displaySender = safeString(sender, "group member")
+        if Ambiguate and displaySender ~= "group member" then
+            local ok, abbreviated = pcall(Ambiguate, displaySender, "short")
+            displaySender = ok and safeString(abbreviated, "group member") or "group member"
+        end
         FEP:Print("Receiving plan from " .. displaySender .. ".")
         return
     end

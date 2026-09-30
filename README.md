@@ -13,7 +13,7 @@ Forever Expedition Planner is a self-contained, Forever-native World of Warcraft
 - Data-driven duplicate/non-stacking warning architecture
 - Bronze, dependency-free native UI
 - Esc → Options → AddOns configuration and `/fep` commands
-- Account-wide SavedVariables
+- Account-wide SavedVariables, including the planner window position
 
 ## Data integrity
 
@@ -52,7 +52,7 @@ Commands:
 - `/fep share` — share assignments with group addon users
 - `/fep help` — command reminder
 
-The window closes when combat begins and will not open during combat.
+The window closes when combat begins and will not open during combat. Its center-relative position persists across sessions and can be restored with **Reset window position** in AddOns options.
 
 ## Development
 
@@ -68,7 +68,10 @@ Build the installable folder with:
 ./scripts/package.ps1
 ```
 
-Output: `dist/ForeverExpeditionPlanner/`
+Outputs:
+
+- `dist/ForeverExpeditionPlanner/` — clean install folder
+- `dist/ForeverExpeditionPlanner-0.1.0-alpha.zip` — distributable archive whose root is the addon folder
 
 ## Compatibility note
 

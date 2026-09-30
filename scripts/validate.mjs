@@ -19,6 +19,9 @@ const toc = fs.readFileSync(tocPath, "utf8");
 
 if (!/^## Interface: 16001$/m.test(toc)) errors.push("TOC Interface must be 16001");
 if (!/^## SavedVariables: ForeverExpeditionPlannerDB$/m.test(toc)) errors.push("SavedVariables declaration missing");
+if (!/^## IconTexture: Interface\\AddOns\\ForeverExpeditionPlanner\\Media\\Icon$/m.test(toc)) errors.push("Bundled icon metadata missing");
+const iconPath = path.join(root, "Media", "Icon.tga");
+if (!fs.existsSync(iconPath) || fs.statSync(iconPath).size !== 16402) errors.push("Bundled 64x64 32-bit TGA icon missing or malformed");
 
 const entries = toc.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith("##"));
 for (const entry of entries) {

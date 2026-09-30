@@ -26,13 +26,14 @@ function FEP:RegisterOptions()
     slotsLabel:SetText("Camp loadout slots")
     local slotButtons = {}
     for index, count in ipairs({ 3, 5, 10 }) do
-        local button = FEP:CreateButton(panel, tostring(count), 58, 25)
-        button:SetPoint("TOPLEFT", slotsLabel, "BOTTOMLEFT", (index - 1) * 64, -8)
+        local buttonIndex, slotCount = index, count
+        local button = FEP:CreateButton(panel, tostring(slotCount), 58, 25)
+        button:SetPoint("TOPLEFT", slotsLabel, "BOTTOMLEFT", (buttonIndex - 1) * 64, -8)
         button:SetScript("OnClick", function()
-            FEP.modules.Planner:SetSlotCount(count)
-            for value, other in pairs(slotButtons) do other:SetEnabled(value ~= count) end
+            FEP.modules.Planner:SetSlotCount(slotCount)
+            for value, other in pairs(slotButtons) do other:SetEnabled(value ~= slotCount) end
         end)
-        slotButtons[count] = button
+        slotButtons[slotCount] = button
     end
     panel:SetScript("OnShow", function()
         for value, button in pairs(slotButtons) do button:SetEnabled(value ~= FEP.db.settings.slotCount) end
@@ -55,22 +56,45 @@ function FEP:RegisterOptions()
     local open = FEP:CreateButton(panel, "Open Planner", 140, 28)
     open:SetPoint("TOPLEFT", 20, -245)
     open:SetScript("OnClick", function() FEP:Toggle() end)
+    local resetPosition = FEP:CreateButton(panel, "Reset window position", 170, 28)
+    resetPosition:SetPoint("LEFT", open, "RIGHT", 10, 0)
+    resetPosition:SetScript("OnClick", function()
+        FEP.db.windowPosition.x, FEP.db.windowPosition.y = 0, 0
+        if FEP.MainFrame then
+            FEP.MainFrame:ClearAllPoints()
+            FEP.MainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+        end
+    end)
     FEP.OptionsPanel = panel
 
-    if Settings and Settings.RegisterCanvasLayoutCategory then
-        local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
-        Settings.RegisterAddOnCategory(category)
-        FEP.OptionsCategoryID = category:GetID()
-    elseif InterfaceOptions_AddCategory then
-        InterfaceOptions_AddCategory(panel)
+    local registered = false
+    if Settings and type(Settings.RegisterCanvasLayoutCategory) == "function" and type(Settings.RegisterAddOnCategory) == "function" then
+        local ok, category = pcall(Settings.RegisterCanvasLayoutCategory, panel, panel.name)
+        if ok and category then
+            local added = pcall(Settings.RegisterAddOnCategory, category)
+            if added then
+                registered = true
+                if type(category.GetID) == "function" then
+                    local idOK, categoryID = pcall(category.GetID, category)
+                    if idOK then FEP.OptionsCategoryID = categoryID end
+                end
+            end
+        end
+    end
+    if not registered and type(InterfaceOptions_AddCategory) == "function" then
+        pcall(InterfaceOptions_AddCategory, panel)
     end
 end
 
 function FEP:OpenOptions()
-    if Settings and Settings.OpenToCategory and self.OptionsCategoryID then
-        Settings.OpenToCategory(self.OptionsCategoryID)
-    elseif InterfaceOptionsFrame_OpenToCategory and self.OptionsPanel then
-        InterfaceOptionsFrame_OpenToCategory(self.OptionsPanel)
-        InterfaceOptionsFrame_OpenToCategory(self.OptionsPanel)
+    if Settings and type(Settings.OpenToCategory) == "function" and self.OptionsCategoryID then
+        local ok = pcall(Settings.OpenToCategory, self.OptionsCategoryID)
+        if ok then return end
+    end
+    if type(InterfaceOptionsFrame_OpenToCategory) == "function" and self.OptionsPanel then
+        pcall(InterfaceOptionsFrame_OpenToCategory, self.OptionsPanel)
+        pcall(InterfaceOptionsFrame_OpenToCategory, self.OptionsPanel)
+    else
+        self:Print("Open Esc > Options > AddOns > Forever Expedition Planner.")
     end
 end

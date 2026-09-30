@@ -4,7 +4,7 @@
 ## Author: Forever Expedition Planner Contributors
 ## Version: 0.1.0-alpha
 ## SavedVariables: ForeverExpeditionPlannerDB
-## IconTexture: Interface\Icons\INV_Misc_Coin_16
+## IconTexture: Interface\AddOns\ForeverExpeditionPlanner\Media\Icon
 
 Core.lua
 Data.lua
