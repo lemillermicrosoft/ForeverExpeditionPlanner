@@ -1,17 +1,18 @@
 local _, FEP = ...
 
 function FEP:CreateButton(parent, text, width, height)
-    local button = CreateFrame("Button", nil, parent)
+    local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     button:SetSize(width or 100, height or 24)
 
-    -- Forever's plain Button does not lazily create a font string when SetText
-    -- or SetNormalFontObject is called. Install one explicitly so callers can
-    -- safely use GetFontString(), alignment, and SetText on every client build.
-    local label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    label:SetPoint("LEFT", button, "LEFT", 6, 0)
-    label:SetPoint("RIGHT", button, "RIGHT", -6, 0)
-    label:SetJustifyH("CENTER")
-    button:SetFontString(label)
+    -- Some Forever builds do not create a font string for plain buttons. The
+    -- native template normally supplies one, but retain a safe fallback.
+    if not button:GetFontString() then
+        local label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        label:SetPoint("LEFT", button, "LEFT", 6, 0)
+        label:SetPoint("RIGHT", button, "RIGHT", -6, 0)
+        label:SetJustifyH("CENTER")
+        button:SetFontString(label)
+    end
     button:SetText(text or "")
 
     self.Theme:Button(button)
@@ -21,7 +22,7 @@ end
 function FEP:CreateLabel(parent, text, template)
     local label = parent:CreateFontString(nil, "OVERLAY", template or "GameFontNormal")
     label:SetText(text or "")
-    label:SetTextColor(unpack(self.Theme.text))
+    self.Theme:Register(label, template == "GameFontDisableSmall" and "muted" or "text")
     return label
 end
 

@@ -3,12 +3,18 @@ local _, FEP = ...
 local pages = {}
 local tabs = {}
 local selectedSlot = 1
+local selectedPage = "Planner"
 
 local function showPage(name)
+    selectedPage = name
     for key, page in pairs(pages) do page:SetShown(key == name) end
     for key, tab in pairs(tabs) do
         tab:SetEnabled(key ~= name)
-        tab:GetFontString():SetTextColor(key == name and 1 or 0.78, key == name and 0.77 or 0.54, key == name and 0.36 or 0.23)
+        if FEP.Theme:IsBronze() then
+            tab:GetFontString():SetTextColor(key == name and 1 or 0.78, key == name and 0.77 or 0.54, key == name and 0.36 or 0.23)
+        else
+            tab:GetFontString():SetTextColor(key == name and 1 or 0.82, key == name and 1 or 0.82, key == name and 1 or 0)
+        end
     end
 end
 
@@ -16,7 +22,7 @@ local function createPage(frame)
     local page = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     page:SetPoint("TOPLEFT", 14, -72)
     page:SetPoint("BOTTOMRIGHT", -14, 14)
-    FEP.Theme:Panel(page)
+    FEP.Theme:Panel(page, "panel")
     return page
 end
 
@@ -27,7 +33,13 @@ local function createPlannerPage(frame)
     local search = FEP:CreateEditBox(page, 260, 28)
     search:SetPoint("TOPLEFT", 18, -18)
     search:SetText("Search camp objects...")
-    search:SetTextColor(unpack(FEP.Theme.muted))
+    local function styleSearchPlaceholder()
+        if search:GetText() == "Search camp objects..." then
+            if FEP.Theme:IsBronze() then search:SetTextColor(unpack(FEP.Theme.muted)) else search:SetTextColor(0.60, 0.60, 0.60) end
+        end
+    end
+    styleSearchPlaceholder()
+    FEP:On("APPEARANCE_CHANGED", styleSearchPlaceholder)
     local results = {}
     for i = 1, 10 do
         local row = FEP:CreateButton(page, "", 260, 27)
@@ -38,7 +50,7 @@ local function createPlannerPage(frame)
         end)
         results[i] = row
     end
-    local pending = FEP:CreateLabel(page, "Verified camp data pack pending.\nEnable Developer Mode in Options to preview sample fixtures.", "GameFontHighlight")
+    local pending = FEP:CreateLabel(page, "Start by choosing a slot on the right. Verified camp-object data is not bundled yet, so slots stay Unassigned.\n\nEnable Developer Mode in Options only to preview clearly labeled sample fixtures.", "GameFontHighlight")
     pending:SetPoint("TOPLEFT", search, "BOTTOMLEFT", 6, -14)
     pending:SetWidth(250)
     pending:SetJustifyH("LEFT")
@@ -58,7 +70,7 @@ local function createPlannerPage(frame)
         for i, row in ipairs(slotRows) do
             row:SetShown(i <= FEP.db.settings.slotCount)
             local object = FEP:GetCampObject(FEP.db.activeLoadout.slots[i])
-            row:SetText((i == selectedSlot and "|cFFFFC45C▶ |r" or "  ") .. i .. ". " .. (object and object.name or "Empty slot"))
+            row:SetText((i == selectedSlot and "|cFFFFC45C▶ |r" or "  ") .. i .. ". " .. (object and object.name or "Unassigned"))
         end
         local warnings = FEP.modules.Planner:GetWarnings()
         page.warning:SetText(#warnings > 0 and ("|cFFFF6233Warning:|r " .. warnings[1].message) or "")
@@ -97,8 +109,11 @@ local function createPresetsPage(frame)
     pages.Presets = page
     local title = FEP:CreateLabel(page, "SAVED PRESETS", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 20, -20)
+    local guidance = FEP:CreateLabel(page, "Starter plans are generic and leave camp slots Unassigned until verified data is available.", "GameFontHighlightSmall")
+    guidance:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -5)
+    FEP.Theme:Register(guidance, "muted")
     local name = FEP:CreateEditBox(page, 270, 28)
-    name:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
+    name:SetPoint("TOPLEFT", guidance, "BOTTOMLEFT", 0, -10)
     name:SetText("Preset name")
     local save = FEP:CreateButton(page, "Save current", 130, 28)
     save:SetPoint("LEFT", name, "RIGHT", 12, 0)
@@ -175,7 +190,7 @@ local function createPartyPage(frame)
             row.label:SetShown(i <= FEP.db.settings.slotCount)
             row.box:SetShown(i <= FEP.db.settings.slotCount)
             local object = FEP:GetCampObject(FEP.db.activeLoadout.slots[i])
-            row.label:SetText(i .. ". " .. (object and object.name or "Empty slot"))
+            row.label:SetText(i .. ". " .. (object and object.name or "Unassigned"))
             if not row.box:HasFocus() then row.box:SetText(FEP.db.assignments[i] or "") end
         end
     end
@@ -192,6 +207,11 @@ local function createChecklistPage(frame)
     materials:SetPoint("TOPLEFT", 20, -20)
     local readiness = FEP:CreateLabel(page, "DUNGEON READINESS", "GameFontNormalLarge")
     readiness:SetPoint("TOPLEFT", 340, -20)
+    local materialHint = FEP:CreateLabel(page, "Materials appear here after verified camp objects are assigned.", "GameFontHighlightSmall")
+    materialHint:SetPoint("TOPLEFT", materials, "BOTTOMLEFT", 0, -12)
+    materialHint:SetWidth(270)
+    materialHint:SetJustifyH("LEFT")
+    FEP.Theme:Register(materialHint, "muted")
     local materialRows, readyRows = {}, {}
     for i = 1, 12 do
         local rowIndex = i
@@ -214,6 +234,7 @@ local function createChecklistPage(frame)
     local function refresh()
         fill(materialRows, FEP.db.checklist.materials)
         fill(readyRows, FEP.db.checklist.readiness)
+        materialHint:SetShown(#FEP.db.checklist.materials == 0)
     end
     FEP:On("CHECKLIST_CHANGED", refresh)
     page.refresh = refresh
@@ -243,13 +264,13 @@ function FEP:CreateMainWindow()
             self:SetPoint("CENTER", UIParent, "CENTER", FEP.db.windowPosition.x, FEP.db.windowPosition.y)
         end
     end)
-    self.Theme:Panel(frame)
+    self.Theme:Panel(frame, "main")
     table.insert(UISpecialFrames, frame:GetName())
     self.MainFrame = frame
 
     local title = self:CreateLabel(frame, "FOREVER EXPEDITION PLANNER", "GameFontNormalHuge")
     title:SetPoint("TOPLEFT", 18, -16)
-    title:SetTextColor(unpack(self.Theme.bronzeBright))
+    self.Theme:Register(title, "title")
     local version = self:CreateLabel(frame, self.version, "GameFontDisableSmall")
     version:SetPoint("LEFT", title, "RIGHT", 9, -2)
     local close = self:CreateButton(frame, "×", 28, 28)
@@ -268,6 +289,7 @@ function FEP:CreateMainWindow()
     createPresetsPage(frame)
     createPartyPage(frame)
     createChecklistPage(frame)
+    self:On("APPEARANCE_CHANGED", function() showPage(selectedPage) end)
     showPage("Planner")
     frame:SetScript("OnShow", function()
         for _, page in pairs(pages) do if page.refresh then page.refresh() end end

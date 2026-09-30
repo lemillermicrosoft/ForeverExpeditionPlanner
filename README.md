@@ -11,13 +11,14 @@ Forever Expedition Planner is a self-contained, Forever-native World of Warcraft
 - Readable manual summary for players without the addon
 - Aggregated materials and dungeon-readiness checklists
 - Data-driven duplicate/non-stacking warning architecture
-- Bronze, dependency-free native UI
+- Configurable **Blizzard / native** and **Bronze / custom** appearances (Blizzard is the fresh-install default)
+- Live appearance switching with no UI reload
 - Esc → Options → AddOns configuration and `/fep` commands
-- Account-wide SavedVariables, including the planner window position
+- Account-wide SavedVariables, including appearance and planner window position
 
 ## Data integrity
 
-No authoritative Forever camp-object dataset was available during this alpha build. Production therefore displays **“Verified camp data pack pending”** and does not invent content. Three conspicuously named sample fixtures can be enabled under **Options → AddOns → Forever Expedition Planner → Developer Mode**. They exist only to exercise UI and planner behavior.
+No authoritative Forever camp-object dataset was available during this alpha build. Production therefore keeps camp-object slots **Unassigned** and does not invent content. Fresh installs receive three generic starter plan names (Dungeon Run, Gathering Trip, and Group Expedition) plus a universal preparation checklist; none claim game-specific objects, costs, or effects. Starter content is seeded once and never overwrites existing presets or checklist state. Three conspicuously named sample fixtures can be enabled under **Options → AddOns → Forever Expedition Planner → Developer Mode**. They exist only to exercise UI and planner behavior.
 
 A future verified data pack can register records at load time:
 
@@ -75,7 +76,7 @@ Outputs:
 
 ## Compatibility note
 
-The options panel prefers the modern `Settings` canvas API and retains a legacy `InterfaceOptions_AddCategory` fallback. Addon messaging similarly prefers `C_ChatInfo` with a legacy fallback. Real client smoke testing is still required on the target Forever build.
+The options panel prefers the modern `Settings` canvas API and retains a legacy `InterfaceOptions_AddCategory` fallback. Native appearance uses Blizzard templates and tiled backdrop textures; atlas textures are not stretched. Addon messaging similarly prefers `C_ChatInfo` with a legacy fallback. Real client smoke testing is still required on the target Forever build.
 
 ## License
 
