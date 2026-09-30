@@ -4,6 +4,7 @@
 ## Author: Forever Expedition Planner Contributors
 ## Version: 0.1.0-alpha
 ## SavedVariables: ForeverExpeditionPlannerDB
+## X-Curse-Project-ID: 1719912
 ## IconTexture: Interface\AddOns\ForeverExpeditionPlanner\Media\Icon
 
 Core.lua
