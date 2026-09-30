@@ -32,8 +32,8 @@ end
 
 function Theme:Panel(frame, kind) self:Register(frame, kind or "panel") end
 
-local function tint(texture, r, g, b)
-    if texture and texture.SetVertexColor then texture:SetVertexColor(r, g, b, 1) end
+local function tint(texture, r, g, b, a)
+    if texture and texture.SetVertexColor then texture:SetVertexColor(r, g, b, a or 1) end
 end
 
 function Theme:Button(button)
@@ -66,14 +66,25 @@ function Theme:ApplyObject(object, kind)
     elseif kind == "muted" then
         if bronze then object:SetTextColor(unpack(self.muted)) else object:SetTextColor(0.72, 0.72, 0.72) end
     elseif kind == "button" then
-        object:SetNormalTexture("Interface\\Buttons\\UI-Panel-Button-Up")
-        object:SetPushedTexture("Interface\\Buttons\\UI-Panel-Button-Down")
-        object:SetDisabledTexture("Interface\\Buttons\\UI-Panel-Button-Disabled")
-        object:SetHighlightTexture("Interface\\Buttons\\UI-Panel-Button-Highlight", "ADD")
-        local r, g, b = 1, 1, 1; if bronze then r, g, b = 0.86, 0.66, 0.38 end
-        tint(object:GetNormalTexture(), r, g, b); tint(object:GetPushedTexture(), r, g, b); tint(object:GetDisabledTexture(), r, g, b)
+        -- Forever recolors the legacy UI-Panel button artwork bright red. Use
+        -- procedural dark-umber surfaces so both appearances remain coherent.
+        object:SetNormalTexture("Interface\\Buttons\\WHITE8X8")
+        object:SetPushedTexture("Interface\\Buttons\\WHITE8X8")
+        object:SetDisabledTexture("Interface\\Buttons\\WHITE8X8")
+        object:SetHighlightTexture("Interface\\Buttons\\WHITE8X8", "ADD")
+        if bronze then
+            tint(object:GetNormalTexture(), 0.22, 0.12, 0.045)
+            tint(object:GetPushedTexture(), 0.12, 0.06, 0.02)
+            tint(object:GetDisabledTexture(), 0.08, 0.07, 0.06, 0.65)
+            tint(object:GetHighlightTexture(), 0.72, 0.47, 0.16, 0.28)
+        else
+            tint(object:GetNormalTexture(), 0.16, 0.085, 0.025)
+            tint(object:GetPushedTexture(), 0.09, 0.045, 0.015)
+            tint(object:GetDisabledTexture(), 0.07, 0.06, 0.05, 0.65)
+            tint(object:GetHighlightTexture(), 0.88, 0.62, 0.28, 0.32)
+        end
         if object:GetFontString() then
-            if bronze then object:GetFontString():SetTextColor(unpack(self.text)) else object:GetFontString():SetTextColor(1, 0.82, 0) end
+            if bronze then object:GetFontString():SetTextColor(unpack(self.text)) else object:GetFontString():SetTextColor(1, 0.82, 0.20) end
         end
     end
 end
