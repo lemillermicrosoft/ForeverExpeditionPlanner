@@ -12,7 +12,8 @@ local function addCheckbox(panel, label, description, y, getter, setter)
 end
 
 function FEP:RegisterOptions()
-    local panel = CreateFrame("Frame", "ForeverExpeditionPlannerOptions")
+    if self.OptionsPanel then return end
+    local panel = CreateFrame("Frame", "ForeverExpeditionPlannerOptions", UIParent)
     panel.name = "Forever Expedition Planner"
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 20, -20)
@@ -82,7 +83,10 @@ function FEP:RegisterOptions()
         end
     end
     if not registered and type(InterfaceOptions_AddCategory) == "function" then
-        pcall(InterfaceOptions_AddCategory, panel)
+        registered = pcall(InterfaceOptions_AddCategory, panel)
+    end
+    if not registered then
+        self:Print("Could not register the AddOns options category; use /fep options and report this client build.")
     end
 end
 

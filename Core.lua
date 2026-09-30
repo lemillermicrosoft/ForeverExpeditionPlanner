@@ -65,10 +65,19 @@ events:SetScript("OnEvent", function(_, event, ...)
         FEP.modules.Planner:Initialize()
         FEP.modules.Checklists:Initialize()
         FEP.modules.Party:Initialize()
+        -- Register with Esc > Options while the addon is loading. Forever's
+        -- Settings category list may already be finalized by PLAYER_LOGIN.
+        if FEP.RegisterOptions then
+            local ok, err = pcall(FEP.RegisterOptions, FEP)
+            if not ok then FEP:Print("Options registration failed: " .. tostring(err)) end
+        end
         FEP:Emit("READY")
     elseif event == "PLAYER_LOGIN" then
-        if FEP.CreateMainWindow then FEP:CreateMainWindow() end
-        if FEP.RegisterOptions then FEP:RegisterOptions() end
+        if FEP.CreateMainWindow then
+            local ok, err = pcall(FEP.CreateMainWindow, FEP)
+            if not ok then FEP:Print("Window creation failed: " .. tostring(err)) end
+        end
+        FEP:Print("Loaded. Type /fep to open or /fep help for commands. Configuration: Esc > Options > AddOns > Forever Expedition Planner.")
     elseif event == "GROUP_ROSTER_UPDATE" then
         FEP.modules.Party:RefreshRoster()
     elseif event == "CHAT_MSG_ADDON" then
