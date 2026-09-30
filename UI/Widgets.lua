@@ -3,7 +3,17 @@ local _, FEP = ...
 function FEP:CreateButton(parent, text, width, height)
     local button = CreateFrame("Button", nil, parent)
     button:SetSize(width or 100, height or 24)
-    button:SetText(text)
+
+    -- Forever's plain Button does not lazily create a font string when SetText
+    -- or SetNormalFontObject is called. Install one explicitly so callers can
+    -- safely use GetFontString(), alignment, and SetText on every client build.
+    local label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("LEFT", button, "LEFT", 6, 0)
+    label:SetPoint("RIGHT", button, "RIGHT", -6, 0)
+    label:SetJustifyH("CENTER")
+    button:SetFontString(label)
+    button:SetText(text or "")
+
     self.Theme:Button(button)
     return button
 end
