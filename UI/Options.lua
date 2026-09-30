@@ -1,12 +1,23 @@
 local _, FEP = ...
 
 local function checkLabel(button)
-    return button.Text or (button:GetName() and _G[button:GetName() .. "Text"])
+    local label = button.Text or (button:GetName() and _G[button:GetName() .. "Text"])
+    if not label then
+        -- Forever's radio template renders the control but does not expose the
+        -- usual .Text region. Own the label so every choice remains readable.
+        label = button:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+        label:SetPoint("LEFT", button, "RIGHT", 4, 0)
+        label:SetJustifyH("LEFT")
+        button.FEPText = label
+    end
+    return label
 end
 
-local function setCheckText(button, text)
+local function setCheckText(button, text, width)
     local label = checkLabel(button)
-    if label then label:SetText(text); FEP.Theme:Register(label, "text") end
+    label:SetText(text)
+    label:SetWidth(width or 145)
+    FEP.Theme:Register(label, "text")
 end
 
 local function createCard(parent, top, height)
@@ -116,10 +127,10 @@ function FEP:RegisterOptions()
 
     local actionsCard = createCard(panel, -481, 70)
     local actionsTitle = createSectionTitle(actionsCard, "Actions")
-    local open = createNativeButton(actionsCard, "Open Planner", 140)
+    local open = createNativeButton(actionsCard, "Open Planner", 150)
     open:SetPoint("TOPLEFT", actionsTitle, "BOTTOMLEFT", 0, -8); open:SetScript("OnClick", function() FEP:Toggle() end)
-    local resetPosition = createNativeButton(actionsCard, "Reset Window Position", 180)
-    resetPosition:SetPoint("LEFT", open, "RIGHT", 10, 0)
+    local resetPosition = createNativeButton(actionsCard, "Reset Window Position", 205)
+    resetPosition:SetPoint("TOPLEFT", actionsTitle, "BOTTOMLEFT", 168, -8)
     resetPosition:SetScript("OnClick", function()
         FEP.db.windowPosition.x, FEP.db.windowPosition.y = 0, 0
         if FEP.MainFrame then FEP.MainFrame:ClearAllPoints(); FEP.MainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0) end
