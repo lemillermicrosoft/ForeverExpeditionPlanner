@@ -13,7 +13,7 @@ function Planner:SetSlotCount(count)
     if not validCounts[count] then count = 5 end
     FEP.db.settings.slotCount = count
     local slots = FEP.db.activeLoadout.slots
-    for index = count + 1, #slots do slots[index] = nil end
+    for index = count + 1, 10 do slots[index] = nil end
     FEP:Emit("PLAN_CHANGED")
 end
 

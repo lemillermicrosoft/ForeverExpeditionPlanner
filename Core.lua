@@ -1,7 +1,7 @@
 local addonName, FEP = ...
 
 FEP.name = addonName
-FEP.version = "0.1.0-alpha"
+FEP.version = "0.2.0-rc1"
 FEP.modules = {}
 FEP.callbacks = {}
 
@@ -44,8 +44,14 @@ SlashCmdList.FOREVEREXPEDITIONPLANNER = function(input)
         if FEP.OpenOptions then FEP:OpenOptions() end
     elseif input == "share" then
         FEP.modules.Party:Broadcast()
+    elseif input == "status" then
+        local count, blocker = FEP:GetDataStatus()
+        FEP:Print(count .. " verified catalog records. " .. blocker)
+        FEP:Print(FEP.modules.Integrations:Status())
+    elseif input == "export" then
+        FEP:Print(FEP.modules.Transfer:Export())
     elseif input == "help" then
-        FEP:Print("/fep - open planner; /fep options; /fep share")
+        FEP:Print("/fep - open; /fep options; /fep share; /fep export; /fep status")
     else
         FEP:Toggle()
     end
@@ -65,6 +71,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         FEP.modules.Planner:Initialize()
         FEP.modules.Checklists:Initialize()
         FEP.modules.Party:Initialize()
+        FEP.modules.Integrations:Initialize()
         -- Register with Esc > Options while the addon is loading. Forever's
         -- Settings category list may already be finalized by PLAYER_LOGIN.
         if FEP.RegisterOptions then

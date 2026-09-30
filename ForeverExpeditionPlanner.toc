@@ -2,18 +2,21 @@
 ## Title: Forever Expedition Planner
 ## Notes: Forever-native camp planning, party assignments, and readiness checklists.
 ## Author: Forever Expedition Planner Contributors
-## Version: 0.1.0-alpha
+## Version: 0.2.0-rc1
 ## SavedVariables: ForeverExpeditionPlannerDB
 ## X-Curse-Project-ID: 1719912
 ## IconTexture: Interface\AddOns\ForeverExpeditionPlanner\Media\Icon
 
 Core.lua
 Data.lua
+DataSources.lua
 Database.lua
 Conflicts.lua
 Planner.lua
+ImportExport.lua
 Party.lua
 Checklists.lua
+Integrations.lua
 UI\Theme.lua
 UI\Widgets.lua
 UI\Main.lua

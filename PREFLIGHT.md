@@ -1,11 +1,11 @@
 # Existing-solutions preflight
 
-Performed 2026-09-30 before implementation.
+Repeated 2026-09-30 for 0.2.0-rc1.
 
-- A current web/GitHub search was attempted, but the configured search provider was unavailable in this build environment.
-- Established WoW addon patterns considered: Ace3-style modular separation, Blizzard’s native Settings canvas, `C_ChatInfo` addon-message prefixes, SavedVariables defaults merging, and provider-owned static data.
-- Decision: keep the addon self-contained. Ace3 is mature and permissively licensed, but vendoring it would add substantial code for an MVP that needs only a small event dispatcher and one options canvas. No runtime dependency is justified.
-- Reused patterns, not copied code: namespace passed through `...`, TOC-ordered modules, recursive defaults merge, versioned message prefix, native Settings registration with legacy fallback, and data-provider registration.
-- No third-party source code was copied into this repository.
+- Public web search was attempted; the configured search provider was unavailable, so direct public endpoints, GitHub search, Blizzard developer documentation, public generated UI API source, and the installed public beta build metadata were checked instead.
+- No maintained Forever camp planner/data pack or documented official camp-object API was found. Exact authority/coverage findings are in `DATA_PROVENANCE.md`.
+- Established WoW patterns retained: Blizzard Settings canvas, `C_ChatInfo`, SavedVariables migrations, provider-owned static data, optional-addon capability detection, and bounded addon messages.
+- Ace3 remains unnecessary for this small self-contained addon; no runtime dependency or third-party source code was added.
+- TomTom and Auctionator are detected only when installed and never required.
 
-Before beta, repeat the online search when a provider is available and compare maintained camp-planning addons or verified Forever data packs.
+Repeat the data-source review whenever build metadata changes or Blizzard publishes a relevant API/data export.

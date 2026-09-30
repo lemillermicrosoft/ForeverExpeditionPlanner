@@ -1,72 +1,42 @@
 local _, FEP = ...
-local Database = {}
-FEP:RegisterModule("Database", Database)
-
-local CURRENT_SCHEMA = 2
+local Database = {}; FEP:RegisterModule("Database", Database)
+local CURRENT_SCHEMA = 4
 local defaults = {
     schema = CURRENT_SCHEMA,
-    settings = { slotCount = 5, developerMode = false, showMinimapHint = true, autoShare = false, appearance = "blizzard" },
-    activeLoadout = { name = "Current Expedition", slots = {} },
-    presets = {},
-    assignments = {},
-    checklist = { materials = {}, readiness = {} },
-    windowPosition = { x = 0, y = 0 },
+    settings = { slotCount = 5, showMinimapHint = true, autoShare = false, appearance = "blizzard" },
+    activeLoadout = { name = "Current Expedition", slots = {} }, presets = {}, assignments = {},
+    checklist = { materials = {}, readiness = {} }, readinessPreset = "Dungeon", windowPosition = { x = 0, y = 0 },
 }
-
+local readiness = {
+    Dungeon = { "Repair gear", "Empty bag space", "Restock consumables", "Review route, quests, and roles", "Confirm meeting stone/travel route", "Check camp materials" },
+    Travel = { "Set destination and route", "Check hearthstone and flight paths", "Empty bag space", "Bring food and water", "Confirm party meeting point", "Check camp materials" },
+}
 local function copyDefaults(source, target)
     for key, value in pairs(source) do
-        if type(value) == "table" then
-            if type(target[key]) ~= "table" then target[key] = {} end
-            copyDefaults(value, target[key])
-        elseif target[key] == nil then
-            target[key] = value
-        end
+        if type(value) == "table" then if type(target[key]) ~= "table" then target[key] = {} end; copyDefaults(value, target[key])
+        elseif target[key] == nil then target[key] = value end
     end
 end
-
-local starterChecklist = {
-    "Repair gear", "Empty bags", "Food/drink", "Meet-up point confirmed", "Quests reviewed", "Materials checked",
-}
-local starterPresets = { "Dungeon Run", "Gathering Trip", "Group Expedition" }
-
-local function seedStarterContent(db)
-    if db.starterContentSeeded then return end
-    -- Starter plans are intentionally generic and keep every camp slot
-    -- unassigned. They provide useful planning structure without presenting
-    -- unverified object names, costs, or effects as game facts.
-    for _, name in ipairs(starterPresets) do
-        if db.presets[name] == nil then db.presets[name] = { name = name, slotCount = 5, slots = {} } end
-    end
-    if #db.checklist.readiness == 0 then
-        for _, label in ipairs(starterChecklist) do
-            table.insert(db.checklist.readiness, { label = label, checked = false })
-        end
-    end
-    db.starterContentSeeded = true
+local function applyReadiness(db, name)
+    name = readiness[name] and name or "Dungeon"; db.readinessPreset, db.checklist.readiness = name, {}
+    for _, label in ipairs(readiness[name]) do db.checklist.readiness[#db.checklist.readiness + 1] = { label = label, checked = false } end
 end
-
+local function migrate(db)
+    local schema = tonumber(db.schema) or 0
+    if schema < 2 then db.settings = db.settings or {}; db.settings.appearance = "blizzard"; schema = 2 end
+    if schema < 3 then db.settings.developerMode = nil; db.transferSchema = 1; schema = 3 end
+    if schema < 4 then db.readinessPreset = db.readinessPreset or "Dungeon"; schema = 4 end
+    db.schema = schema
+end
 function Database:Initialize()
     if type(ForeverExpeditionPlannerDB) ~= "table" then ForeverExpeditionPlannerDB = {} end
-    copyDefaults(defaults, ForeverExpeditionPlannerDB)
-    FEP.db = ForeverExpeditionPlannerDB
-    if FEP.db.settings.appearance ~= "blizzard" and FEP.db.settings.appearance ~= "bronze" then
-        FEP.db.settings.appearance = "blizzard"
-    end
-    seedStarterContent(FEP.db)
+    migrate(ForeverExpeditionPlannerDB); copyDefaults(defaults, ForeverExpeditionPlannerDB); FEP.db = ForeverExpeditionPlannerDB
+    local s = FEP.db.settings; if s.appearance ~= "blizzard" and s.appearance ~= "bronze" then s.appearance = "blizzard" end
+    if s.slotCount ~= 3 and s.slotCount ~= 5 and s.slotCount ~= 10 then s.slotCount = 5 end
+    if #FEP.db.checklist.readiness == 0 then applyReadiness(FEP.db, FEP.db.readinessPreset) end
+    local p = FEP.db.windowPosition; p.x = type(p.x) == "number" and math.max(-2000, math.min(2000, p.x)) or 0; p.y = type(p.y) == "number" and math.max(-2000, math.min(2000, p.y)) or 0
     FEP.db.schema = CURRENT_SCHEMA
-    local position = FEP.db.windowPosition
-    if type(position.x) ~= "number" or position.x ~= position.x then position.x = 0 end
-    if type(position.y) ~= "number" or position.y ~= position.y then position.y = 0 end
-    position.x = math.max(-2000, math.min(2000, position.x))
-    position.y = math.max(-2000, math.min(2000, position.y))
-    if FEP.db.settings.developerMode then FEP:LoadDeveloperFixtures() end
 end
-
-function Database:Reset()
-    ForeverExpeditionPlannerDB = {}
-    copyDefaults(defaults, ForeverExpeditionPlannerDB)
-    FEP.db = ForeverExpeditionPlannerDB
-    seedStarterContent(FEP.db)
-    FEP.db.schema = CURRENT_SCHEMA
-    FEP:Emit("DATA_CHANGED")
-end
+function Database:SetReadinessPreset(name) if readiness[name] then applyReadiness(FEP.db, name); FEP:Emit("CHECKLIST_CHANGED"); return true end return false end
+function Database:Reset() ForeverExpeditionPlannerDB = {}; self:Initialize(); FEP:Emit("DATA_CHANGED"); FEP:Emit("PLAN_CHANGED") end
+Database.CURRENT_SCHEMA, Database.readiness = CURRENT_SCHEMA, readiness

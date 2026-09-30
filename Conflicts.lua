@@ -1,21 +1,14 @@
 local _, FEP = ...
-local Conflicts = {}
-FEP:RegisterModule("Conflicts", Conflicts)
-
--- This evaluator is data-driven. A verified data pack supplies shared buff keys
--- or explicit conflict keys; the addon does not guess game stacking rules.
+local Conflicts = {}; FEP:RegisterModule("Conflicts", Conflicts)
 function Conflicts:Evaluate(objectIDs)
     local seen, warnings = {}, {}
-    for slot, id in ipairs(objectIDs or {}) do
-        local object = FEP:GetCampObject(id)
+    for slot = 1, 10 do
+        local object = FEP:GetCampObject(objectIDs[slot])
         if object then
-            local keys = object.conflicts or object.buffs or {}
+            local keys = {}; for _, key in ipairs(object.buffs or {}) do keys[#keys + 1] = "buff:" .. key end; for _, key in ipairs(object.conflicts or {}) do keys[#keys + 1] = "conflict:" .. key end
             for _, key in ipairs(keys) do
-                if seen[key] then
-                    table.insert(warnings, { key = key, first = seen[key], second = slot, message = object.name .. " may not stack with slot " .. seen[key] })
-                else
-                    seen[key] = slot
-                end
+                if seen[key] then warnings[#warnings + 1] = { key = key, first = seen[key], second = slot, message = object.name .. " may not stack with slot " .. seen[key] }
+                else seen[key] = slot end
             end
         end
     end

@@ -1,83 +1,51 @@
 # Forever Expedition Planner
 
-Forever Expedition Planner is a self-contained, Forever-native World of Warcraft addon for planning camp loadouts before combat. This repository contains an **installable alpha** targeting the modern restricted Classic branch (`Interface: 16001`).
+A privacy-first planning addon for World of Warcraft: Forever (`Interface 16001`). **0.2.0-rc1 is a smoke-test candidate, not a published release.**
 
-## Alpha features
+## What works
 
-- Searchable, provider-based camp-object data model
-- 3, 5, or 10-slot camp loadouts
-- Named saved presets
-- Party “who brings what” assignments through versioned addon messages
-- Readable manual summary for players without the addon
-- Aggregated materials and dungeon-readiness checklists
-- Data-driven duplicate/non-stacking warning architecture
-- Configurable **Blizzard / native** and **Bronze / custom** appearances (Blizzard is the fresh-install default)
-- Live appearance switching with no UI reload
-- Esc → Options → AddOns configuration and `/fep` commands
-- Account-wide SavedVariables, including appearance and planner window position
+- Searchable, provenance-enforced catalog registry with safe item tooltips/icons when verified item IDs exist
+- 3/5/10-slot plans, named presets, material aggregation, and verified data-driven non-stacking warnings
+- Party assignments and atomic protocol-v2 sync; every message is bounded to 240 bytes
+- Copyable plain-text fallback summary for players without the addon
+- Dungeon and travel readiness templates
+- `FEPX1` plan import/export with bounded parsing, unknown-ID rejection, and schema migrations
+- Optional TomTom/Auctionator detection without hard dependencies
+- Blizzard/native default plus optional Bronze appearance
+- No combat-log processing, protected actions, external telemetry, or secret-value assumptions
 
-## Data integrity
+## Catalog status (bounded blocker)
 
-No authoritative Forever camp-object dataset was available during this alpha build. Production therefore keeps camp-object slots **Unassigned** and does not invent content. Fresh installs receive three generic starter plan names (Dungeon Run, Gathering Trip, and Group Expedition) plus a universal preparation checklist; none claim game-specific objects, costs, or effects. Starter content is seeded once and never overwrites existing presets or checklist state. Three conspicuously named sample fixtures can be enabled under **Options → AddOns → Forever Expedition Planner → Developer Mode**. They exist only to exercise UI and planner behavior.
+The bundled verified catalog contains **zero records**. As of 2026-09-30, no redistributable official/public source found by this project exposes Forever camp-object IDs, Blueprint recipes, material quantities, buffs, or stacking semantics. We will not relabel unrelated WoW items, scrape private/NDA material, or infer facts from screenshots. The planner remains usable for structure, assignments, readiness, transfers, and future verified providers, but object selection and material aggregation are blocked until such a source exists.
 
-A future verified data pack can register records at load time:
+See [DATA_PROVENANCE.md](DATA_PROVENANCE.md) for exact sources, build, license basis, date, results, and acceptance rules. Unknown fields remain absent rather than guessed.
 
-```lua
-FEP:RegisterCampObjects("Verified Provider Name", {
-  {
-    id = "stable-provider-id",
-    name = "Localized display name",
-    category = "Category",
-    description = "Description",
-    tags = { "searchable", "terms" },
-    materials = { { name = "Material", count = 2 } },
-    buffs = { "verified-stacking-group" },
-  },
-})
-```
+## Install and test
 
-`buffs` and `conflicts` are provider-supplied keys. The addon does not infer stacking behavior.
+Copy the `ForeverExpeditionPlanner` folder into `_classic_beta_/Interface/AddOns/`, then enable it at character selection. Commands:
 
-## Install
+- `/fep` — toggle
+- `/fep options` — options
+- `/fep share` — explicit party sync
+- `/fep export` — print transfer string
+- `/fep status` — dataset/integration status
 
-Copy the packaged `ForeverExpeditionPlanner` folder into:
-
-`World of Warcraft/_classic_/Interface/AddOns/`
-
-The folder must directly contain `ForeverExpeditionPlanner.toc`. Enable **Load out of date AddOns** only if the Forever client’s reported interface number differs from 16001.
-
-Commands:
-
-- `/fep` — toggle planner
-- `/fep options` — open AddOns options
-- `/fep share` — share assignments with group addon users
-- `/fep help` — command reminder
-
-The window closes when combat begins and will not open during combat. Its center-relative position persists across sessions and can be restored with **Reset window position** in AddOns options.
+The planner hides on combat entry and refuses to open during combat.
 
 ## Development
 
-No external libraries, generated runtime dependencies, combat-log parsing, protected calls, or secret-value assumptions are used. Run static validation with:
-
 ```powershell
 node scripts/validate.mjs
-```
-
-Build the installable folder with:
-
-```powershell
+node scripts/test.mjs
 ./scripts/package.ps1
 ```
 
-Outputs:
+Packaging creates `dist/ForeverExpeditionPlanner-0.2.0-rc1.zip` with the addon folder as its root. No release is created by this workflow.
 
-- `dist/ForeverExpeditionPlanner/` — clean install folder
-- `dist/ForeverExpeditionPlanner-0.1.0-alpha.zip` — distributable archive whose root is the addon folder
+## Provider contract
 
-## Compatibility note
-
-The options panel prefers the modern `Settings` canvas API and retains a legacy `InterfaceOptions_AddCategory` fallback. Native appearance uses Blizzard templates and tiled backdrop textures; atlas textures are not stretched. Addon messaging similarly prefers `C_ChatInfo` with a legacy fallback. Real client smoke testing is still required on the target Forever build.
+`FEP:RegisterCampObjects(provider, records, manifest)` accepts only records with `id`, `name`, `category`, `description`, plus a `verification` table containing `source`, `url`, `build`, `license`, `verifiedOn`, and `status`. Materials require positive quantities. Buff/conflict keys must be explicitly sourced. Malformed and duplicate records are rejected.
 
 ## License
 
-Copyright © 2026 Forever Expedition Planner Contributors. All rights reserved. See [LICENSE](LICENSE).
+Copyright 2026 Forever Expedition Planner Contributors. All rights reserved. Blizzard names and game data remain Blizzard Entertainment property; source references do not grant relicensing rights.

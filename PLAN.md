@@ -1,33 +1,29 @@
-# Forever Expedition Planner plan
+# Release plan
 
-## Alpha — implemented
+## 0.2.0-rc1 candidate — implemented
 
-- Modular core, storage, static-data registry, planner, party transport, checklists, conflict evaluator, native UI, and options
-- Empty production catalog with opt-in developer fixtures
-- Versioned `FEP1` addon-message prefix and plain-text fallback
-- Static package validation and deterministic local packaging
+- End-to-end plan/preset/assignment/checklist/transfer workflow
+- FEP2 atomic party protocol, maximum-record size test, and plain-text fallback
+- Safe migration and import/export boundaries
+- Optional TomTom/Auctionator capability detection
+- Interface 16001 UI safeguards and native-default appearance
+- Deterministic Lua syntax, data, protocol, migration, conflict, restricted-API, and archive checks
+- Installable ZIP and local `_classic_beta_` deployment
 
-## Beta — blocked on verified inputs
+## Pre-release gate
 
-1. Obtain an authoritative camp-object source with stable IDs, names, categories, materials, icons, and stacking/conflict semantics.
-2. Confirm Forever client API behavior for Interface 16001 on a real client.
-3. Add localization boundaries and a verified data-provider manifest.
-4. Add import/export schema versioning only if the game’s restricted branch safely supports the chosen encoding.
-5. Run multiplayer interoperability tests for party, raid, and instance groups.
+The owner must smoke-test the candidate in the real client. Do not publish GitHub or CurseForge releases before that approval.
 
-## Release readiness
+## Bounded blocker
 
-- In-client smoke test: open/close, combat boundary, reload persistence, options registration
-- Verify 3/5/10 slot truncation behavior is acceptable to product owner
-- Verify addon-message size against the largest real identifiers
-- Accessibility/readability pass at multiple UI scales
-- Package metadata, screenshots, changelog, and release notes
-- CurseForge project ID and approved release channel
+Object selection and material computation await a redistributable official/public camp-object/Blueprint source. Exact checked sources and zero verified coverage are in `DATA_PROVENANCE.md`. No sample or inferred content may be promoted into production.
 
-## Explicit non-goals
+## Smoke-test checklist
 
-- No combat automation or combat-log analysis
-- No protected action execution
-- No guessed camp data or stacking rules
-- No external runtime frameworks
-- No release/publish workflow in this repository alpha
+1. `/reload`, `/fep`, close button, drag persistence, combat hide/refusal.
+2. Switch Blizzard/Bronze appearances; inspect labels, buttons, and absence of red legacy textures.
+3. Change 3/5/10 slots; save/load/delete presets.
+4. Use Transfer export/import and try malformed/unknown-ID text.
+5. Test Dungeon/Travel readiness checkboxes.
+6. In a two-client group, share and verify atomic FEP2 receipt; copy Manual Summary.
+7. Verify `/fep status` reports zero verified records and optional addon status accurately.

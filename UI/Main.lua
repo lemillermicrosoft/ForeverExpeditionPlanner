@@ -48,6 +48,16 @@ local function createPlannerPage(frame)
         row:SetScript("OnClick", function(self)
             if self.objectID then FEP.modules.Planner:SetSlot(selectedSlot, self.objectID) end
         end)
+        row:SetScript("OnEnter", function(self)
+            local object = FEP:GetCampObject(self.objectID); if not object then return end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if object.itemID and GameTooltip.SetItemByID then GameTooltip:SetItemByID(object.itemID) else
+                GameTooltip:SetText(object.name); GameTooltip:AddLine(object.description, 1, 1, 1, true)
+                GameTooltip:AddLine("Source: " .. object.verification.source .. " (" .. object.verification.status .. ")", 0.7, 0.7, 0.7, true)
+            end
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
         results[i] = row
     end
     local pending = FEP:CreateLabel(page, "Start by choosing a slot on the right. Verified camp-object data is not bundled yet, so slots stay Unassigned.\n\nEnable Developer Mode in Options only to preview clearly labeled sample fixtures.", "GameFontHighlight")
@@ -205,8 +215,14 @@ local function createChecklistPage(frame)
     pages.Checklists = page
     local materials = FEP:CreateLabel(page, "MATERIALS", "GameFontNormalLarge")
     materials:SetPoint("TOPLEFT", 20, -20)
-    local readiness = FEP:CreateLabel(page, "DUNGEON READINESS", "GameFontNormalLarge")
+    local readiness = FEP:CreateLabel(page, "READINESS", "GameFontNormalLarge")
     readiness:SetPoint("TOPLEFT", 340, -20)
+    local dungeonPreset = FEP:CreateButton(page, "Dungeon", 82, 23)
+    dungeonPreset:SetPoint("LEFT", readiness, "RIGHT", 8, 0)
+    dungeonPreset:SetScript("OnClick", function() FEP.modules.Database:SetReadinessPreset("Dungeon") end)
+    local travelPreset = FEP:CreateButton(page, "Travel", 72, 23)
+    travelPreset:SetPoint("LEFT", dungeonPreset, "RIGHT", 6, 0)
+    travelPreset:SetScript("OnClick", function() FEP.modules.Database:SetReadinessPreset("Travel") end)
     local materialHint = FEP:CreateLabel(page, "Materials appear here after verified camp objects are assigned.", "GameFontHighlightSmall")
     materialHint:SetPoint("TOPLEFT", materials, "BOTTOMLEFT", 0, -12)
     materialHint:SetWidth(270)
@@ -238,6 +254,29 @@ local function createChecklistPage(frame)
     end
     FEP:On("CHECKLIST_CHANGED", refresh)
     page.refresh = refresh
+    return page
+end
+
+local function createTransferPage(frame)
+    local page = createPage(frame)
+    pages.Transfer = page
+    local title = FEP:CreateLabel(page, "IMPORT / EXPORT", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 20, -20)
+    local note = FEP:CreateLabel(page, "Schema FEPX1 is text-only, bounded, and never executes imported code. Unknown catalog IDs are rejected.")
+    note:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8); note:SetWidth(620); note:SetJustifyH("LEFT")
+    local box = FEP:CreateEditBox(page, 620, 250, true)
+    box:SetPoint("TOPLEFT", note, "BOTTOMLEFT", 0, -14)
+    local export = FEP:CreateButton(page, "Export current", 145, 28)
+    export:SetPoint("TOPLEFT", box, "BOTTOMLEFT", 0, -14)
+    export:SetScript("OnClick", function() box:SetText(FEP.modules.Transfer:Export()); box:HighlightText(); box:SetFocus() end)
+    local import = FEP:CreateButton(page, "Import", 110, 28)
+    import:SetPoint("LEFT", export, "RIGHT", 10, 0)
+    local status = FEP:CreateLabel(page, "", "GameFontHighlight")
+    status:SetPoint("LEFT", import, "RIGHT", 12, 0); status:SetWidth(330); status:SetJustifyH("LEFT")
+    import:SetScript("OnClick", function() local ok, err = FEP.modules.Transfer:Import(box:GetText()); status:SetText(ok and "|cFF66DD66Imported safely.|r" or ("|cFFFF6655" .. tostring(err) .. "|r")) end)
+    local dataset = FEP:CreateLabel(page, "", "GameFontHighlightSmall")
+    dataset:SetPoint("TOPLEFT", export, "BOTTOMLEFT", 0, -22); dataset:SetWidth(620); dataset:SetJustifyH("LEFT")
+    page.refresh = function() local count, blocker = FEP:GetDataStatus(); dataset:SetText("Verified catalog coverage: " .. count .. " records. " .. blocker) end
     return page
 end
 
@@ -277,11 +316,11 @@ function FEP:CreateMainWindow()
     close:SetPoint("TOPRIGHT", -12, -10)
     close:SetScript("OnClick", function() frame:Hide() end)
 
-    local tabNames = { "Planner", "Presets", "Party", "Checklists" }
+    local tabNames = { "Planner", "Presets", "Party", "Checklists", "Transfer" }
     for index, name in ipairs(tabNames) do
         local tabIndex, pageName = index, name
-        local tab = self:CreateButton(frame, pageName, 120, 25)
-        tab:SetPoint("TOPLEFT", 16 + ((tabIndex - 1) * 124), -43)
+        local tab = self:CreateButton(frame, pageName, 105, 25)
+        tab:SetPoint("TOPLEFT", 16 + ((tabIndex - 1) * 109), -43)
         tab:SetScript("OnClick", function() showPage(pageName) if pages[pageName].refresh then pages[pageName].refresh() end end)
         tabs[pageName] = tab
     end
@@ -289,6 +328,7 @@ function FEP:CreateMainWindow()
     createPresetsPage(frame)
     createPartyPage(frame)
     createChecklistPage(frame)
+    createTransferPage(frame)
     self:On("APPEARANCE_CHANGED", function() showPage(selectedPage) end)
     showPage("Planner")
     frame:SetScript("OnShow", function()

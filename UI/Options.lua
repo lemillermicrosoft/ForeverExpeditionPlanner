@@ -105,24 +105,14 @@ function FEP:RegisterOptions()
 
     local behaviorCard = createCard(panel, -290, 181)
     local behaviorTitle = createSectionTitle(behaviorCard, "Behavior")
-    local behaviorDescription = createDescription(behaviorCard, behaviorTitle, "Control test data and plan sharing. Changes save immediately.")
-    local developer, developerDetail = createCheckbox(behaviorCard, "Developer Mode",
-        "Loads labeled sample fixtures for UI testing; these are not game data.", behaviorDescription,
-        function() return FEP.db.settings.developerMode end,
-        function(value)
-            FEP.db.settings.developerMode = value
-            if value then FEP:LoadDeveloperFixtures() else
-                FEP.Data.objects, FEP.Data.byID, FEP.Data.providers = {}, {}, {}
-                FEP.db.activeLoadout.slots = {}; FEP:Emit("DATA_CHANGED"); FEP:Emit("PLAN_CHANGED")
-            end
-        end)
+    local behaviorDescription = createDescription(behaviorCard, behaviorTitle, "Plan sharing is opt-in and uses protocol v2. Changes save immediately.")
     local autoShare = CreateFrame("CheckButton", nil, behaviorCard, "UICheckButtonTemplate")
-    autoShare:SetPoint("TOPLEFT", developerDetail, "BOTTOMLEFT", -28, -9); setCheckText(autoShare, "Automatically share plan changes")
+    autoShare:SetPoint("TOPLEFT", behaviorDescription, "BOTTOMLEFT", -4, -10); setCheckText(autoShare, "Automatically share plan changes")
     autoShare.tooltipText = "Automatically share plan changes"
     autoShare.tooltipRequirement = "Reserved for a future release and currently produces no traffic."
     autoShare:SetScript("OnClick", function(self) FEP.db.settings.autoShare = self:GetChecked() == true end)
     local shareDetail = behaviorCard:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    shareDetail:SetPoint("TOPLEFT", autoShare, "BOTTOMLEFT", 28, 2); shareDetail:SetText("Reserved for a future release; disabled behavior in this alpha.")
+    shareDetail:SetPoint("TOPLEFT", autoShare, "BOTTOMLEFT", 28, 2); shareDetail:SetText("Reserved for explicit opt-in after multiplayer smoke testing; currently no automatic traffic.")
     self.Theme:Register(shareDetail, "muted")
 
     local actionsCard = createCard(panel, -481, 70)
@@ -140,7 +130,7 @@ function FEP:RegisterOptions()
     panel:SetScript("OnShow", function()
         for value, radio in pairs(appearanceButtons) do radio:SetChecked(value == FEP.db.settings.appearance) end
         for value, radio in pairs(slotButtons) do radio:SetChecked(value == FEP.db.settings.slotCount) end
-        developer:SetChecked(FEP.db.settings.developerMode); autoShare:SetChecked(FEP.db.settings.autoShare)
+        autoShare:SetChecked(FEP.db.settings.autoShare)
     end)
 
     local registered = false

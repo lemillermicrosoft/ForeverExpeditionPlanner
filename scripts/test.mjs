@@ -1,0 +1,33 @@
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
+const root = path.resolve(import.meta.dirname, "..");
+const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
+const toc = read("ForeverExpeditionPlanner.toc");
+const data = read("DataSources.lua");
+const party = read("Party.lua");
+const database = read("Database.lua");
+const transfer = read("ImportExport.lua");
+assert.match(toc, /^## Version: 0\.2\.0-rc1$/m);
+assert.match(toc, /^## Interface: 16001$/m);
+assert.match(data, /verifiedRecords = 0/);
+assert.match(data, /claimedComplete = false/);
+for (const field of ["url", "build", "license", "verifiedOn", "result"]) assert.match(data, new RegExp(`${field} =`));
+assert.doesNotMatch(data, /Sample Comfort|Sample Feast|Sample Material/);
+assert.match(database, /CURRENT_SCHEMA = 4/);
+for (const n of [2, 3, 4]) assert.match(database, new RegExp(`schema < ${n}`));
+assert.match(transfer, /PREFIX = "FEPX1"/);
+assert.match(transfer, /#text > 8000/);
+assert.match(transfer, /Unknown object:/);
+assert.match(party, /prefix = "FEP2"/);
+assert.match(party, /protocol = 2/);
+assert.match(party, /#payload > 240/);
+const maxMessage = ["S", "2", "1234567890123456", "10", "x".repeat(120), "y".repeat(80)].join("|");
+assert.equal(maxMessage.length, 225);
+assert.ok(maxMessage.length <= 240, `maximum protocol record is ${maxMessage.length}`);
+const conflictSource = read("Conflicts.lua");
+assert.match(conflictSource, /"buff:"/); assert.match(conflictSource, /"conflict:"/);
+for (const forbidden of ["CombatLogGetCurrentEventInfo", "CastSpellByName", "RunMacroText", "SecureActionButtonTemplate"]) {
+  for (const file of fs.readdirSync(root).filter((x) => x.endsWith(".lua"))) assert.ok(!read(file).includes(forbidden), `${file}: protected API`);
+}
+console.log("PASS: data provenance, migrations, transfer parser bounds, protocol v2 size, conflict namespaces, and protected API gates.");
