@@ -1,11 +1,12 @@
 local _, FEP = ...
 local Database = {}; FEP:RegisterModule("Database", Database)
-local CURRENT_SCHEMA = 4
+local CURRENT_SCHEMA = 5
 local defaults = {
     schema = CURRENT_SCHEMA,
     settings = { slotCount = 5, showMinimapHint = true, autoShare = false, appearance = "blizzard" },
     activeLoadout = { name = "Current Expedition", slots = {} }, presets = {}, assignments = {},
     checklist = { materials = {}, readiness = {} }, readinessPreset = "Dungeon", windowPosition = { x = 0, y = 0 },
+    campButton = { visible = true, defaultObjectID = nil, position = { x = 260, y = -40 } },
 }
 local readiness = {
     Dungeon = { "Repair gear", "Empty bag space", "Restock consumables", "Review route, quests, and roles", "Confirm meeting stone/travel route", "Check camp materials" },
@@ -26,6 +27,7 @@ local function migrate(db)
     if schema < 2 then db.settings = db.settings or {}; db.settings.appearance = "blizzard"; schema = 2 end
     if schema < 3 then db.settings.developerMode = nil; db.transferSchema = 1; schema = 3 end
     if schema < 4 then db.readinessPreset = db.readinessPreset or "Dungeon"; schema = 4 end
+    if schema < 5 then db.campButton = db.campButton or {}; schema = 5 end
     db.schema = schema
 end
 function Database:Initialize()
@@ -35,6 +37,10 @@ function Database:Initialize()
     if s.slotCount ~= 3 and s.slotCount ~= 5 and s.slotCount ~= 10 then s.slotCount = 5 end
     if #FEP.db.checklist.readiness == 0 then applyReadiness(FEP.db, FEP.db.readinessPreset) end
     local p = FEP.db.windowPosition; p.x = type(p.x) == "number" and math.max(-2000, math.min(2000, p.x)) or 0; p.y = type(p.y) == "number" and math.max(-2000, math.min(2000, p.y)) or 0
+    local c = FEP.db.campButton; c.visible = c.visible ~= false
+    if type(c.defaultObjectID) ~= "string" or #c.defaultObjectID > 120 then c.defaultObjectID = nil end
+    c.position.x = type(c.position.x) == "number" and math.max(-2000, math.min(2000, c.position.x)) or 260
+    c.position.y = type(c.position.y) == "number" and math.max(-2000, math.min(2000, c.position.y)) or -40
     FEP.db.schema = CURRENT_SCHEMA
 end
 function Database:SetReadinessPreset(name) if readiness[name] then applyReadiness(FEP.db, name); FEP:Emit("CHECKLIST_CHANGED"); return true end return false end

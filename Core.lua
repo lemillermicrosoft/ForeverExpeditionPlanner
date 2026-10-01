@@ -39,7 +39,8 @@ end
 SLASH_FOREVEREXPEDITIONPLANNER1 = "/fep"
 SLASH_FOREVEREXPEDITIONPLANNER2 = "/expeditionplanner"
 SlashCmdList.FOREVEREXPEDITIONPLANNER = function(input)
-    input = (input or ""):lower():match("^%s*(.-)%s*$")
+    local raw = (input or ""):match("^%s*(.-)%s*$")
+    input = raw:lower()
     if input == "options" then
         if FEP.OpenOptions then FEP:OpenOptions() end
     elseif input == "share" then
@@ -48,10 +49,30 @@ SlashCmdList.FOREVEREXPEDITIONPLANNER = function(input)
         local count, blocker = FEP:GetDataStatus()
         FEP:Print(count .. " verified catalog records. " .. blocker)
         FEP:Print(FEP.modules.Integrations:Status())
+        FEP:Print(FEP.modules.CampContext:GetDetectionStatus())
+    elseif input == "camp" or input == "camp toggle" then
+        local active = FEP.modules.CampContext:Toggle()
+        FEP:Print("Manual camp context " .. (active and "enabled. The choice button is now available." or "disabled."))
+    elseif input == "camp show" then
+        FEP.db.campButton.visible = true; FEP.modules.CampContext:SetActive(true)
+        FEP:Print("Camp button enabled; manual camp context active.")
+    elseif input == "camp hide" then
+        FEP.db.campButton.visible = false; FEP.modules.CampContext:SetActive(false)
+        FEP:Print("Camp button hidden.")
+    elseif input == "camp probe" then
+        FEP:Print(FEP.modules.CampContext:Probe())
+    elseif input == "camp status" then
+        local object, reason = FEP.modules.CampContext:GetRecommendation()
+        FEP:Print(FEP.modules.CampContext:GetDetectionStatus())
+        FEP:Print((object and ("Choice: " .. object.name .. ". ") or "") .. reason)
+    elseif input:match("^camp default%s+") then
+        local id = raw:match("^[Cc][Aa][Mm][Pp]%s+[Dd][Ee][Ff][Aa][Uu][Ll][Tt]%s+(.+)$")
+        local ok, err = FEP.modules.CampContext:SetDefault(id)
+        FEP:Print(ok and ("Personal camp default set to " .. FEP:GetCampObject(id).name .. ".") or err)
     elseif input == "export" then
         FEP:Print(FEP.modules.Transfer:Export())
     elseif input == "help" then
-        FEP:Print("/fep - open; /fep options; /fep share; /fep export; /fep status")
+        FEP:Print("/fep - open; /fep options; /fep share; /fep export; /fep status; /fep camp [toggle|show|hide|status|probe|default <id>]")
     else
         FEP:Toggle()
     end
@@ -68,6 +89,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         local loaded = ...
         if loaded ~= addonName then return end
         FEP.modules.Database:Initialize()
+        FEP.modules.CampContext:Initialize()
         FEP.modules.Planner:Initialize()
         FEP.modules.Checklists:Initialize()
         FEP.modules.Party:Initialize()
@@ -83,6 +105,10 @@ events:SetScript("OnEvent", function(_, event, ...)
         if FEP.CreateMainWindow then
             local ok, err = pcall(FEP.CreateMainWindow, FEP)
             if not ok then FEP:Print("Window creation failed: " .. tostring(err)) end
+        end
+        if FEP.CreateCampButton then
+            local ok, err = pcall(FEP.CreateCampButton, FEP)
+            if not ok then FEP:Print("Camp button creation failed: " .. tostring(err)) end
         end
         FEP:Print("Loaded. Type /fep to open or /fep help for commands. Configuration: Esc > Options > AddOns > Forever Expedition Planner.")
     elseif event == "GROUP_ROSTER_UPDATE" then

@@ -114,6 +114,17 @@ function FEP:RegisterOptions()
     local shareDetail = behaviorCard:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     shareDetail:SetPoint("TOPLEFT", autoShare, "BOTTOMLEFT", 28, 2); shareDetail:SetText("Reserved for explicit opt-in after multiplayer smoke testing; currently no automatic traffic.")
     self.Theme:Register(shareDetail, "muted")
+    local showCampButton = CreateFrame("CheckButton", nil, behaviorCard, "UICheckButtonTemplate")
+    showCampButton:SetPoint("TOPLEFT", shareDetail, "BOTTOMLEFT", -28, -8); setCheckText(showCampButton, "Show contextual camp button", 210)
+    showCampButton.tooltipText = "Show contextual camp button"
+    showCampButton.tooltipRequirement = "The button appears only while manual camp context is active; automatic sensing is not proven on Interface 16001."
+    showCampButton:SetScript("OnClick", function(self)
+        FEP.db.campButton.visible = self:GetChecked() == true
+        FEP:Emit("CAMP_CONTEXT_CHANGED", FEP.modules.CampContext.contextActive)
+    end)
+    local campDetail = behaviorCard:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    campDetail:SetPoint("TOPLEFT", showCampButton, "BOTTOMLEFT", 28, 2); campDetail:SetText("Use /fep camp at a camp. Selection is planning-only and never places or casts.")
+    self.Theme:Register(campDetail, "muted")
 
     local actionsCard = createCard(panel, -481, 70)
     local actionsTitle = createSectionTitle(actionsCard, "Actions")
@@ -126,11 +137,15 @@ function FEP:RegisterOptions()
         if FEP.MainFrame then FEP.MainFrame:ClearAllPoints(); FEP.MainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0) end
         FEP:Print("Window position reset.")
     end)
+    local resetCamp = createNativeButton(actionsCard, "Reset Camp Button", 170)
+    resetCamp:SetPoint("LEFT", resetPosition, "RIGHT", 12, 0)
+    resetCamp:SetScript("OnClick", function() FEP:ResetCampButtonPosition(); FEP:Print("Camp button position reset.") end)
 
     panel:SetScript("OnShow", function()
         for value, radio in pairs(appearanceButtons) do radio:SetChecked(value == FEP.db.settings.appearance) end
         for value, radio in pairs(slotButtons) do radio:SetChecked(value == FEP.db.settings.slotCount) end
         autoShare:SetChecked(FEP.db.settings.autoShare)
+        showCampButton:SetChecked(FEP.db.campButton.visible)
     end)
 
     local registered = false
