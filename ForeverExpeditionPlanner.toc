@@ -19,5 +19,7 @@ Checklists.lua
 Integrations.lua
 UI\Theme.lua
 UI\Widgets.lua
+UI\CampContext.lua
+UI\CampButton.lua
 UI\Main.lua
 UI\Options.lua
